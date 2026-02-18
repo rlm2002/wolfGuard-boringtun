@@ -12,6 +12,7 @@ use std::time::{Duration, SystemTime};
 use wolfssl_wolfcrypt::aes::GCM;
 use wolfssl_wolfcrypt::ecc::ECC;
 use wolfssl_wolfcrypt::hmac::HMAC;
+use wolfssl_wolfcrypt::random::RNG;
 use wolfssl_wolfcrypt::sha::SHA256;
 
 #[cfg(feature = "mock-instant")]
@@ -918,8 +919,10 @@ mod tests {
 
 fn diffie_hellman(private: &[u8], public: &[u8]) -> [u8; 32] {
     let mut shared_secret = [0u8; 32];
+    let mut rng = RNG::new().unwrap();
     let mut ecc_private = ECC::import_private_key_ex(private, &[], ECC::SECP256R1, None, None).unwrap();
     let mut ecc_public = ECC::import_x963_ex(public, ECC::SECP256R1, None, None).unwrap();
+    ecc_private.set_rng(&mut rng).unwrap();
     let size = ecc_private.shared_secret(&mut ecc_public, &mut shared_secret).unwrap();
     assert_eq!(size, shared_secret.len());
     shared_secret
